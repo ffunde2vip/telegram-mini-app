@@ -31,32 +31,51 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Инициализация приложения
-function initializeApp() {
-    // Получаем данные пользователя
-    const user = tg.initDataUnsafe?.user;
-    
-    if (user) {
-        currentUser = {
-            id: user.id,
-            firstName: user.first_name || '',
-            lastName: user.last_name || '',
-            username: user.username || '',
-            photoUrl: user.photo_url || '',
-            city: 'Москва', // По умолчанию
-            street: 'ул. Примерная' // По умолчанию
-        };
+async function initializeApp() {
+    try {
+        // Аутентификация в Firebase
+        await window.auth.signInAnonymously();
+        console.log('Аутентификация в Firebase успешна');
         
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe?.user;
+        
+        if (user) {
+            currentUser = {
+                id: user.id,
+                firstName: user.first_name || '',
+                lastName: user.last_name || '',
+                username: user.username || '',
+                photoUrl: user.photo_url || '',
+                city: 'Москва', // По умолчанию
+                street: 'ул. Примерная' // По умолчанию
+            };
+            
             // Автоматически определяем роль пользователя
-    if (isAdmin(currentUser.id)) {
-        // Администратор может выбрать роль
-        showAuthScreen();
-    } else {
-        // Обычный пользователь - сразу показываем интерфейс пользователя
-        currentRole = 'user';
-        showUserInterface();
-    }
-    } else {
-        // Если данные пользователя недоступны, показываем интерфейс пользователя
+            if (isAdmin(currentUser.id)) {
+                // Администратор может выбрать роль
+                showAuthScreen();
+            } else {
+                // Обычный пользователь - сразу показываем интерфейс пользователя
+                currentRole = 'user';
+                await showUserInterface();
+            }
+        } else {
+            // Если данные пользователя недоступны, показываем интерфейс пользователя
+            currentUser = {
+                id: 'unknown',
+                firstName: 'Гость',
+                lastName: '',
+                username: '',
+                photoUrl: '',
+                city: 'Москва',
+                street: 'ул. Примерная'
+            };
+            await showUserInterface();
+        }
+    } catch (error) {
+        console.error('Ошибка аутентификации:', error);
+        // Показываем интерфейс пользователя даже при ошибке аутентификации
         currentUser = {
             id: 'unknown',
             firstName: 'Гость',
@@ -66,21 +85,21 @@ function initializeApp() {
             city: 'Москва',
             street: 'ул. Примерная'
         };
-        showUserInterface();
+        await showUserInterface();
     }
 }
 
 // Настройка обработчиков событий
 function setupEventListeners() {
     // Кнопки ролей
-    document.getElementById('userRoleBtn').addEventListener('click', () => {
+    document.getElementById('userRoleBtn').addEventListener('click', async () => {
         currentRole = 'user';
-        showUserInterface();
+        await showUserInterface();
     });
     
-    document.getElementById('adminRoleBtn').addEventListener('click', () => {
+    document.getElementById('adminRoleBtn').addEventListener('click', async () => {
         currentRole = 'admin';
-        showAdminInterface();
+        await showAdminInterface();
     });
     
     // Кнопки выхода
@@ -136,25 +155,28 @@ function showAuthScreen() {
 }
 
 // Показать интерфейс пользователя
-function showUserInterface() {
+async function showUserInterface() {
     loadingScreen.style.display = 'none';
     authScreen.style.display = 'none';
     userInterface.style.display = 'block';
     adminInterface.style.display = 'none';
     
     updateUserInfo();
-    loadProcedures();
+    await loadProcedures();
     renderProcedures();
+    
+    // Сохраняем информацию о пользователе в Firebase
+    await window.firebaseService.saveUserInfo(currentUser.id, currentUser);
 }
 
 // Показать интерфейс администратора
-function showAdminInterface() {
+async function showAdminInterface() {
     loadingScreen.style.display = 'none';
     authScreen.style.display = 'none';
     userInterface.style.display = 'none';
     adminInterface.style.display = 'block';
     
-    loadClients();
+    await loadClients();
     renderClients();
 }
 
@@ -176,15 +198,21 @@ function updateUserInfo() {
     userLocation.textContent = `${currentUser.city}, ${currentUser.street}`;
 }
 
-// Загрузка процедур (симуляция)
-function loadProcedures() {
-    // В реальном приложении здесь был бы запрос к серверу
-    procedures = JSON.parse(localStorage.getItem(`procedures_${currentUser.id}`)) || [];
+// Загрузка процедур из Firebase
+async function loadProcedures() {
+    try {
+        procedures = await window.firebaseService.getUserProcedures(currentUser.id);
+        console.log('Процедуры загружены из Firebase:', procedures);
+    } catch (error) {
+        console.error('Ошибка загрузки процедур:', error);
+        procedures = [];
+    }
 }
 
-// Сохранение процедур
-function saveProcedures() {
-    localStorage.setItem(`procedures_${currentUser.id}`, JSON.stringify(procedures));
+// Сохранение процедур в Firebase
+async function saveProcedures() {
+    // Этот метод больше не нужен, так как каждая процедура сохраняется отдельно
+    console.log('Процедуры уже сохранены в Firebase');
 }
 
 // Отображение процедур
@@ -223,38 +251,15 @@ function renderProcedures() {
     });
 }
 
-// Загрузка клиентов (симуляция)
-function loadClients() {
-    // В реальном приложении здесь был бы запрос к серверу
-    const allProcedures = {};
-    const allUsers = {};
-    
-    // Собираем данные всех пользователей
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('procedures_')) {
-            const userId = key.replace('procedures_', '');
-            const userProcedures = JSON.parse(localStorage.getItem(key)) || [];
-            
-            if (userProcedures.length > 0) {
-                allProcedures[userId] = userProcedures;
-                
-                // Создаем объект пользователя
-                allUsers[userId] = {
-                    id: userId,
-                    firstName: userProcedures[0]?.userName || 'Клиент',
-                    lastName: '',
-                    username: '',
-                    photoUrl: '',
-                    city: 'Москва',
-                    street: 'ул. Примерная',
-                    proceduresCount: userProcedures.length
-                };
-            }
-        }
+// Загрузка клиентов из Firebase
+async function loadClients() {
+    try {
+        clients = await window.firebaseService.getAllUsers();
+        console.log('Клиенты загружены из Firebase:', clients);
+    } catch (error) {
+        console.error('Ошибка загрузки клиентов:', error);
+        clients = [];
     }
-    
-    clients = Object.values(allUsers);
 }
 
 // Отображение клиентов
@@ -333,7 +338,7 @@ function hideAddProcedureModal() {
 }
 
 // Обработка добавления процедуры
-function handleAddProcedure(event) {
+async function handleAddProcedure(event) {
     event.preventDefault();
     
     const formData = new FormData(event.target);
@@ -349,17 +354,23 @@ function handleAddProcedure(event) {
         createdAt: new Date().toISOString()
     };
     
-    procedures.unshift(procedure);
-    saveProcedures();
-    renderProcedures();
-    hideAddProcedureModal();
+    // Сохраняем в Firebase
+    const success = await window.firebaseService.saveProcedure(currentUser.id, procedure);
     
-    // Отправляем данные в бот
-    sendDataToBot({
-        action: 'add_procedure',
-        procedure: procedure,
-        user: currentUser
-    });
+    if (success) {
+        procedures.unshift(procedure);
+        renderProcedures();
+        hideAddProcedureModal();
+        
+        // Отправляем данные в бот
+        sendDataToBot({
+            action: 'add_procedure',
+            procedure: procedure,
+            user: currentUser
+        });
+    } else {
+        alert('Ошибка сохранения процедуры. Попробуйте еще раз.');
+    }
 }
 
 // Показать детали процедуры
@@ -427,15 +438,14 @@ function hideEditProcedureModal() {
 }
 
 // Обработка редактирования процедуры
-function handleEditProcedure(event) {
+async function handleEditProcedure(event) {
     event.preventDefault();
     
     const procedureIndex = procedures.findIndex(p => p.id === currentProcedureId);
     if (procedureIndex === -1) return;
     
     const formData = new FormData(event.target);
-    const updatedProcedure = {
-        ...procedures[procedureIndex],
+    const updatedData = {
         name: formData.get('editProcedureName') || document.getElementById('editProcedureName').value,
         date: formData.get('editProcedureDate') || document.getElementById('editProcedureDate').value,
         changes: formData.get('editProcedureChanges') || document.getElementById('editProcedureChanges').value,
@@ -444,84 +454,101 @@ function handleEditProcedure(event) {
         updatedAt: new Date().toISOString()
     };
     
-    procedures[procedureIndex] = updatedProcedure;
-    saveProcedures();
-    renderProcedures();
-    hideEditProcedureModal();
+    // Обновляем в Firebase
+    const success = await window.firebaseService.updateProcedure(currentUser.id, currentProcedureId, updatedData);
     
-    // Отправляем данные в бот
-    sendDataToBot({
-        action: 'edit_procedure',
-        procedure: updatedProcedure,
-        user: currentUser
-    });
-}
-
-// Обработка удаления процедуры
-function handleDeleteProcedure() {
-    if (!currentProcedureId) return;
-    
-    if (confirm('Вы уверены, что хотите удалить эту процедуру?')) {
-        procedures = procedures.filter(p => p.id !== currentProcedureId);
-        saveProcedures();
+    if (success) {
+        procedures[procedureIndex] = { ...procedures[procedureIndex], ...updatedData };
         renderProcedures();
-        hideViewProcedureModal();
+        hideEditProcedureModal();
         
         // Отправляем данные в бот
         sendDataToBot({
-            action: 'delete_procedure',
-            procedureId: currentProcedureId,
+            action: 'edit_procedure',
+            procedure: procedures[procedureIndex],
             user: currentUser
         });
+    } else {
+        alert('Ошибка обновления процедуры. Попробуйте еще раз.');
+    }
+}
+
+// Обработка удаления процедуры
+async function handleDeleteProcedure() {
+    if (!currentProcedureId) return;
+    
+    if (confirm('Вы уверены, что хотите удалить эту процедуру?')) {
+        // Удаляем из Firebase
+        const success = await window.firebaseService.deleteProcedure(currentUser.id, currentProcedureId);
+        
+        if (success) {
+            procedures = procedures.filter(p => p.id !== currentProcedureId);
+            renderProcedures();
+            hideViewProcedureModal();
+            
+            // Отправляем данные в бот
+            sendDataToBot({
+                action: 'delete_procedure',
+                procedureId: currentProcedureId,
+                user: currentUser
+            });
+        } else {
+            alert('Ошибка удаления процедуры. Попробуйте еще раз.');
+        }
     }
 }
 
 // Показать детали клиента
-function showClientDetails(clientId) {
+async function showClientDetails(clientId) {
     const client = clients.find(c => c.id === clientId);
     if (!client) return;
     
-    const clientProcedures = JSON.parse(localStorage.getItem(`procedures_${clientId}`)) || [];
-    
-    document.getElementById('viewClientTitle').textContent = `Процедуры ${client.firstName}`;
-    
-    const content = document.getElementById('viewClientContent');
-    
-    if (clientProcedures.length === 0) {
-        content.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard-list"></i>
-                <p>У клиента пока нет процедур</p>
-            </div>
-        `;
-    } else {
-        content.innerHTML = `
-            <div class="client-info-header">
-                <img src="${client.photoUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNlOWVjZWYiLz4KPHBhdGggZD0iTTIwIDEwQzIyLjIwOTEgMTAgMjQgMTEuNzkwOSAyNCAxNEMyNCAxNi4yMDkxIDIyLjIwOTEgMTggMjAgMThDMTcuNzkwOSAxOCAxNiAxNi4yMDkxIDE2IDE0QzE2IDExLjc5MDkgMTcuNzkwOSAxMCAyMCAxMFoiIGZpbGw9IiM2NjY2NjYiLz4KPHBhdGggZD0iTTI4IDMwQzI4IDI2LjY4NjMgMjQuNDE4MyAyNCAyMCAyNEMxNS41ODE3IDI0IDEyIDI2LjY4NjMgMTIgMzBIMjhaIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPgo='}" alt="Аватар" class="client-avatar">
-                <div class="client-details">
-                    <h4>${client.firstName} ${client.lastName}</h4>
-                    <p>@${client.username || 'без username'}</p>
-                    <p>${client.city}, ${client.street}</p>
+    try {
+        const clientProcedures = await window.firebaseService.getUserProceduresForAdmin(clientId);
+        
+        document.getElementById('viewClientTitle').textContent = `Процедуры ${client.firstName}`;
+        
+        const content = document.getElementById('viewClientContent');
+        
+        if (clientProcedures.length === 0) {
+            content.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>У клиента пока нет процедур</p>
                 </div>
-            </div>
-            <div class="procedures-list">
-                ${clientProcedures
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))
-                    .map(procedure => `
-                        <div class="procedure-item">
-                            <div class="procedure-header">
-                                <div class="procedure-title">${procedure.name}</div>
-                                <div class="procedure-date">${formatDate(procedure.date)}</div>
+            `;
+        } else {
+            content.innerHTML = `
+                <div class="client-info-header">
+                    <img src="${client.photoUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNlOWVjZWYiLz4KPHBhdGggZD0iTTIwIDEwQzIyLjIwOTEgMTAgMjQgMTEuNzkwOSAyNCAxNEMyNCAxNi4yMDkxIDIyLjIwOTEgMTggMjAgMThDMTcuNzkwOSAxOCAxNiAxNi4yMDkxIDE2IDE0QzE2IDExLjc5MDkgMTcuNzkwOSAxMCAyMCAxMFoiIGZpbGw9IiM2NjY2NjYiLz4KPHBhdGggZD0iTTI4IDMwQzI4IDI2LjY4NjMgMjQuNDE4MyAyNCAyMCAyNEMxNS41ODE3IDI0IDEyIDI2LjY4NjMgMTIgMzBIMjhaIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPgo='}" alt="Аватар" class="client-avatar">
+                    <div class="client-details">
+                        <h4>${client.firstName} ${client.lastName}</h4>
+                        <p>@${client.username || 'без username'}</p>
+                        <p>${client.city}, ${client.street}</p>
+                    </div>
+                </div>
+                <div class="procedures-list">
+                    ${clientProcedures
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map(procedure => `
+                            <div class="procedure-item">
+                                <div class="procedure-header">
+                                    <div class="procedure-title">${procedure.name}</div>
+                                    <div class="procedure-date">${formatDate(procedure.date)}</div>
+                                </div>
+                                <div class="procedure-preview">${procedure.changes.substring(0, 100)}${procedure.changes.length > 100 ? '...' : ''}</div>
+                                <div class="procedure-specialist">Специалист: ${procedure.specialist}</div>
                             </div>
-                            <div class="procedure-preview">${procedure.changes.substring(0, 100)}${procedure.changes.length > 100 ? '...' : ''}</div>
-                            <div class="procedure-specialist">Специалист: ${procedure.specialist}</div>
-                        </div>
-                    `).join('')}
-            </div>
-        `;
+                        `).join('')}
+                </div>
+            `;
+        }
+        
+        viewClientModal.style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки процедур клиента:', error);
+        alert('Ошибка загрузки процедур клиента');
     }
-    
-    viewClientModal.style.display = 'flex';
 }
 
 // Скрыть модальное окно просмотра клиента
