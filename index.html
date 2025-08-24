@@ -3,75 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram User Info</title>
+    <title>Косметология - Личный кабинет</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="config.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Информация о пользователе</h1>
+        <!-- Загрузочный экран -->
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-spinner"></div>
+            <p>Загрузка...</p>
         </div>
-        
-        <div class="user-info">
-            <div class="avatar-section">
-                <img id="userAvatar" src="" alt="Аватар пользователя" class="avatar">
-                <div class="online-status" id="onlineStatus"></div>
-            </div>
-            
-            <div class="info-section">
-                <div class="info-item">
-                    <label>Имя:</label>
-                    <span id="userName">Загрузка...</span>
+
+        <!-- Экран авторизации -->
+        <div id="authScreen" class="auth-screen" style="display: none;">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <i class="fas fa-spa"></i>
+                    <h1>Косметология</h1>
+                    <p>Выберите роль для входа</p>
                 </div>
                 
-                <div class="info-item">
-                    <label>Фамилия:</label>
-                    <span id="userLastName">Загрузка...</span>
-                </div>
-                
-                <div class="info-item">
-                    <label>Username:</label>
-                    <span id="userUsername">Загрузка...</span>
-                </div>
-                
-                <div class="info-item">
-                    <label>ID пользователя:</label>
-                    <span id="userId">Загрузка...</span>
-                </div>
-                
-                <div class="info-item">
-                    <label>Язык:</label>
-                    <span id="userLanguage">Загрузка...</span>
-                </div>
-                
-                <div class="info-item">
-                    <label>Платформа:</label>
-                    <span id="userPlatform">Загрузка...</span>
-                </div>
-                
-                <div class="info-item">
-                    <label>Версия приложения:</label>
-                    <span id="appVersion">Загрузка...</span>
+                <div class="role-buttons">
+                    <button id="userRoleBtn" class="role-btn">
+                        <i class="fas fa-user"></i>
+                        <span>Клиент</span>
+                    </button>
+                    <button id="adminRoleBtn" class="role-btn">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Администратор</span>
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <div class="theme-info">
-            <div class="info-item">
-                <label>Тема:</label>
-                <span id="themeMode">Загрузка...</span>
+
+        <!-- Интерфейс пользователя -->
+        <div id="userInterface" class="user-interface" style="display: none;">
+            <div class="header">
+                <div class="user-info">
+                    <img id="userAvatar" src="" alt="Аватар" class="avatar">
+                    <div class="user-details">
+                        <h2 id="userName">Клиент</h2>
+                        <p id="userLocation">Город, улица</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
-            
-            <div class="info-item">
-                <label>Цветовая схема:</label>
-                <span id="colorScheme">Загрузка...</span>
+
+            <div class="content">
+                <div class="procedures-section">
+                    <div class="section-header">
+                        <h3>Мои процедуры</h3>
+                        <button id="addProcedureBtn" class="add-btn">
+                            <i class="fas fa-plus"></i>
+                            Добавить процедуру
+                        </button>
+                    </div>
+                    
+                    <div id="proceduresList" class="procedures-list">
+                        <!-- Процедуры будут добавляться динамически -->
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="actions">
-            <button id="shareButton" class="btn btn-primary">Поделиться</button>
-            <button id="closeButton" class="btn btn-secondary">Закрыть</button>
+
+        <!-- Интерфейс администратора -->
+        <div id="adminInterface" class="admin-interface" style="display: none;">
+            <div class="header">
+                <div class="admin-info">
+                    <i class="fas fa-user-shield"></i>
+                    <h2>Панель администратора</h2>
+                </div>
+                <button id="adminLogoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+
+            <div class="content">
+                <div class="clients-section">
+                    <div class="section-header">
+                        <h3>Список клиентов</h3>
+                        <div class="search-box">
+                            <input type="text" id="searchClients" placeholder="Поиск клиентов...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="clientsList" class="clients-list">
+                        <!-- Клиенты будут добавляться динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно добавления процедуры -->
+        <div id="addProcedureModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Добавить процедуру</h3>
+                    <button id="closeAddModal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="addProcedureForm" class="procedure-form">
+                    <div class="form-group">
+                        <label>Название процедуры</label>
+                        <input type="text" id="procedureName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дата процедуры</label>
+                        <input type="date" id="procedureDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Что было изменено</label>
+                        <textarea id="procedureChanges" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Кто проводил</label>
+                        <input type="text" id="procedureSpecialist" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дополнительные заметки</label>
+                        <textarea id="procedureNotes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="cancelAddProcedure" class="btn btn-secondary">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно просмотра процедуры -->
+        <div id="viewProcedureModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="viewProcedureTitle">Детали процедуры</h3>
+                    <button id="closeViewModal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="viewProcedureContent" class="procedure-details">
+                    <!-- Детали процедуры будут добавляться динамически -->
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="editProcedureBtn" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </button>
+                    <button id="deleteProcedureBtn" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно редактирования процедуры -->
+        <div id="editProcedureModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Редактировать процедуру</h3>
+                    <button id="closeEditModal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="editProcedureForm" class="procedure-form">
+                    <div class="form-group">
+                        <label>Название процедуры</label>
+                        <input type="text" id="editProcedureName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дата процедуры</label>
+                        <input type="date" id="editProcedureDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Что было изменено</label>
+                        <textarea id="editProcedureChanges" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Кто проводил</label>
+                        <input type="text" id="editProcedureSpecialist" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дополнительные заметки</label>
+                        <textarea id="editProcedureNotes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="cancelEditProcedure" class="btn btn-secondary">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно просмотра клиента (для админа) -->
+        <div id="viewClientModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="viewClientTitle">Процедуры клиента</h3>
+                    <button id="closeClientModal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="viewClientContent" class="client-details">
+                    <!-- Детали клиента будут добавляться динамически -->
+                </div>
+            </div>
         </div>
     </div>
     
