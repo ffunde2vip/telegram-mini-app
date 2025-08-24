@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram User Info</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Информация о пользователе</h1>
+        </div>
+        
+        <div class="user-info">
+            <div class="avatar-section">
+                <img id="userAvatar" src="" alt="Аватар пользователя" class="avatar">
+                <div class="online-status" id="onlineStatus"></div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-item">
+                    <label>Имя:</label>
+                    <span id="userName">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>Фамилия:</label>
+                    <span id="userLastName">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>Username:</label>
+                    <span id="userUsername">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>ID пользователя:</label>
+                    <span id="userId">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>Язык:</label>
+                    <span id="userLanguage">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>Платформа:</label>
+                    <span id="userPlatform">Загрузка...</span>
+                </div>
+                
+                <div class="info-item">
+                    <label>Версия приложения:</label>
+                    <span id="appVersion">Загрузка...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="theme-info">
+            <div class="info-item">
+                <label>Тема:</label>
+                <span id="themeMode">Загрузка...</span>
+            </div>
+            
+            <div class="info-item">
+                <label>Цветовая схема:</label>
+                <span id="colorScheme">Загрузка...</span>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button id="shareButton" class="btn btn-primary">Поделиться</button>
+            <button id="closeButton" class="btn btn-secondary">Закрыть</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
