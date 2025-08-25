@@ -1,9 +1,4 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore"; // ← ДОБАВИТЬ ЭТУ СТРОКУ!
-
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC_V2gK9Af-Ib1kOU-0fbCMmG6Nn9fWIZw",
   authDomain: "kosmetolog-de6c1.firebaseapp.com",
@@ -15,9 +10,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app); // ← ДОБАВИТЬ ЭТУ СТРОКУ!
+firebase.initializeApp(firebaseConfig);
 
-// Экспортируем для использования в других файлах
-export { app, db };
+// Initialize Firestore
+const db = firebase.firestore();
+
+// Initialize Auth
+const auth = firebase.auth();
+
+// Make available globally
+window.firebase = firebase;
+window.db = db;
+window.auth = auth;
