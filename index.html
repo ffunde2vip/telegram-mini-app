@@ -15,7 +15,7 @@
         </div>
 
         <!-- Экран выбора роли/авторизации -->
-        <div id="authScreen" class="auth-screen">
+        <div id="authScreen" class="auth-screen hidden">
             <div class="auth-container">
                 <div class="auth-header">
                     <i class="fas fa-spa"></i>
@@ -44,6 +44,10 @@
             <div class="content">
                 <div class="section-header">
                     <h3>Мои процедуры</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input id="searchProcedures" type="text" placeholder="Поиск по названию или изменениям..." />
+                    </div>
                     <button id="addProcedureBtn" class="add-btn"><i class="fas fa-plus"></i> Добавить процедуру</button>
                 </div>
                 <div id="proceduresList" class="procedures-list"></div>
