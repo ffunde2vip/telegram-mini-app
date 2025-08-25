@@ -19,35 +19,78 @@ class FirebaseService {
         console.log('✅ Firebase сервис инициализирован');
     }
 
-    // Сохранение процедуры пользователя
-    async saveProcedure(userId, procedure) {
+    // Получение или создание пользователя по Telegram ID
+    async getOrCreateUser(telegramUserId, userInfo) {
         try {
-            console.log('🔄 Попытка сохранения процедуры:', { userId, procedureId: procedure.id });
+            console.log('🔄 Получение/создание пользователя для Telegram ID:', telegramUserId);
+            
+            // Ищем пользователя по Telegram ID
+            const usersRef = this.db.collection('users');
+            const snapshot = await usersRef.where('telegramId', '==', telegramUserId).limit(1).get();
+            
+            if (!snapshot.empty) {
+                // Пользователь найден - возвращаем его
+                const userDoc = snapshot.docs[0];
+                console.log('✅ Пользователь найден:', userDoc.id);
+                return {
+                    id: userDoc.id, // Firebase UID
+                    ...userDoc.data()
+                };
+            } else {
+                // Пользователь не найден - создаем нового
+                console.log('👤 Создаем нового пользователя для Telegram ID:', telegramUserId);
+                
+                const newUserData = {
+                    telegramId: telegramUserId,
+                    ...userInfo,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+                
+                // Создаем документ с автоматически сгенерированным ID
+                const newUserRef = await usersRef.add(newUserData);
+                
+                console.log('✅ Новый пользователь создан с Firebase ID:', newUserRef.id);
+                return {
+                    id: newUserRef.id,
+                    ...newUserData
+                };
+            }
+        } catch (error) {
+            console.error('❌ Ошибка получения/создания пользователя:', error);
+            throw error;
+        }
+    }
+
+    // Сохранение процедуры пользователя
+    async saveProcedure(telegramUserId, procedure) {
+        try {
+            console.log('🔄 Попытка сохранения процедуры для Telegram ID:', telegramUserId);
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            if (!userId || !procedure.id) {
-                throw new Error('Отсутствуют обязательные параметры: userId или procedure.id');
+            if (!telegramUserId || !procedure.id) {
+                throw new Error('Отсутствуют обязательные параметры: telegramUserId или procedure.id');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
+            // Получаем или создаем пользователя
+            const user = await this.getOrCreateUser(telegramUserId, {
+                firstName: procedure.userName.split(' ')[0] || 'Пользователь',
+                lastName: procedure.userName.split(' ').slice(1).join(' ') || '',
+                username: '',
+                photoUrl: '',
+                city: 'Москва',
+                street: 'ул. Примерная'
+            });
+
+            const userRef = this.db.collection('users').doc(user.id);
             const proceduresRef = userRef.collection('procedures');
-            
-            // Проверяем, существует ли пользователь
-            const userDoc = await userRef.get();
-            if (!userDoc.exists) {
-                console.log('👤 Создаем нового пользователя:', userId);
-                await userRef.set({
-                    id: userId,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                });
-            }
             
             const procedureData = {
                 ...procedure,
+                telegramUserId: telegramUserId, // Сохраняем связь с Telegram
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
@@ -73,15 +116,25 @@ class FirebaseService {
     }
 
     // Получение всех процедур пользователя
-    async getUserProcedures(userId) {
+    async getUserProcedures(telegramUserId) {
         try {
-            console.log('🔄 Загрузка процедур для пользователя:', userId);
+            console.log('🔄 Загрузка процедур для Telegram ID:', telegramUserId);
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
+            // Получаем пользователя
+            const user = await this.getOrCreateUser(telegramUserId, {
+                firstName: 'Пользователь',
+                lastName: '',
+                username: '',
+                photoUrl: '',
+                city: 'Москва',
+                street: 'ул. Примерная'
+            });
+
+            const userRef = this.db.collection('users').doc(user.id);
             const proceduresRef = userRef.collection('procedures');
             const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
             
@@ -103,15 +156,25 @@ class FirebaseService {
     }
 
     // Обновление процедуры
-    async updateProcedure(userId, procedureId, updatedData) {
+    async updateProcedure(telegramUserId, procedureId, updatedData) {
         try {
-            console.log('🔄 Обновление процедуры:', { userId, procedureId, updatedData });
+            console.log('🔄 Обновление процедуры:', { telegramUserId, procedureId, updatedData });
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
+            // Получаем пользователя
+            const user = await this.getOrCreateUser(telegramUserId, {
+                firstName: 'Пользователь',
+                lastName: '',
+                username: '',
+                photoUrl: '',
+                city: 'Москва',
+                street: 'ул. Примерная'
+            });
+
+            const userRef = this.db.collection('users').doc(user.id);
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             const updateData = {
@@ -131,15 +194,25 @@ class FirebaseService {
     }
 
     // Удаление процедуры
-    async deleteProcedure(userId, procedureId) {
+    async deleteProcedure(telegramUserId, procedureId) {
         try {
-            console.log('🔄 Удаление процедуры:', { userId, procedureId });
+            console.log('🔄 Удаление процедуры:', { telegramUserId, procedureId });
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
+            // Получаем пользователя
+            const user = await this.getOrCreateUser(telegramUserId, {
+                firstName: 'Пользователь',
+                lastName: '',
+                username: '',
+                photoUrl: '',
+                city: 'Москва',
+                street: 'ул. Примерная'
+            });
+
+            const userRef = this.db.collection('users').doc(user.id);
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             await procedureRef.delete();
@@ -154,18 +227,22 @@ class FirebaseService {
     }
 
     // Сохранение информации о пользователе
-    async saveUserInfo(userId, userInfo) {
+    async saveUserInfo(telegramUserId, userInfo) {
         try {
-            console.log('🔄 Сохранение информации о пользователе:', { userId, userInfo });
+            console.log('🔄 Сохранение информации о пользователе для Telegram ID:', telegramUserId);
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
+            // Получаем или создаем пользователя
+            const user = await this.getOrCreateUser(telegramUserId, userInfo);
+            
+            const userRef = this.db.collection('users').doc(user.id);
             
             const userData = {
                 ...userInfo,
+                telegramId: telegramUserId,
                 lastSeen: new Date(),
                 updatedAt: new Date()
             };
@@ -215,20 +292,29 @@ class FirebaseService {
     }
 
     // Получение процедур конкретного пользователя (для администратора)
-    async getUserProceduresForAdmin(userId) {
+    async getUserProceduresForAdmin(telegramUserId) {
         try {
-            console.log('🔄 Загрузка процедур пользователя для админа:', userId);
+            console.log('🔄 Загрузка процедур пользователя для админа:', telegramUserId);
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
 
-            const userRef = this.db.collection('users').doc(userId);
-            const proceduresRef = userRef.collection('procedures');
-            const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
+            // Получаем пользователя по Telegram ID
+            const usersRef = this.db.collection('users');
+            const snapshot = await usersRef.where('telegramId', '==', telegramUserId).limit(1).get();
+            
+            if (snapshot.empty) {
+                console.log('❌ Пользователь не найден');
+                return [];
+            }
+            
+            const userDoc = snapshot.docs[0];
+            const proceduresRef = userDoc.ref.collection('procedures');
+            const proceduresSnapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
             
             const procedures = [];
-            snapshot.forEach(doc => {
+            proceduresSnapshot.forEach(doc => {
                 procedures.push({
                     id: doc.id,
                     ...doc.data()
