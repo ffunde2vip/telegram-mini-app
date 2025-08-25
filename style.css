@@ -1,15 +1,12 @@
-*** Begin Patch
-*** Update File: c:\Users\logicx\PycharmProjects\manikur\style.css
-@@
- body {
-@@
- }
-+
-+/* Утилиты */
-+.hidden {
-+    display: none !important;
-+}
-*** End Patchr(--tg-theme-bg-color, #f8f9fa);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--tg-theme-bg-color, #f8f9fa);
     color: var(--tg-theme-text-color, #333);
     line-height: 1.6;
     transition: all 0.3s ease;
@@ -140,6 +137,22 @@
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+.header-dark {
+    background: #0f2a5a;
+    color: #ffffff;
+    border-color: rgba(255,255,255,0.1);
+}
+
+.header-dark .user-details h2,
+.header-dark .user-details p {
+    color: #ffffff;
+}
+
+.user-tag {
+    font-size: 13px;
+    opacity: 0.85;
 }
 
 .user-info, .admin-info {
