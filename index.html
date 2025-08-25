@@ -6,14 +6,11 @@
     <title>Косметология - Личный кабинет</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <!-- Firebase SDK - обновленная версия -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
-    <script src="firebase-config.js"></script>
-    <script src="firebase-service.js"></script>
-    <script src="config.js"></script>
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -117,36 +114,30 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <form id="addProcedureForm" class="procedure-form">
+                <form id="addProcedureForm">
                     <div class="form-group">
-                        <label>Название процедуры</label>
-                        <input type="text" id="procedureName" required>
+                        <label for="procedureName">Название процедуры *</label>
+                        <input type="text" id="procedureName" name="procedureName" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Дата процедуры</label>
-                        <input type="date" id="procedureDate" required>
+                        <label for="procedureDate">Дата процедуры *</label>
+                        <input type="date" id="procedureDate" name="procedureDate" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Что было изменено</label>
-                        <textarea id="procedureChanges" rows="3" required></textarea>
+                        <label for="procedureChanges">Что было изменено *</label>
+                        <textarea id="procedureChanges" name="procedureChanges" rows="3" required></textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Кто проводил</label>
-                        <input type="text" id="procedureSpecialist" required>
+                        <label for="procedureSpecialist">Кто проводил *</label>
+                        <input type="text" id="procedureSpecialist" name="procedureSpecialist" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Дополнительные заметки</label>
-                        <textarea id="procedureNotes" rows="2"></textarea>
+                        <label for="procedureNotes">Дополнительные заметки</label>
+                        <textarea id="procedureNotes" name="procedureNotes" rows="2"></textarea>
                     </div>
-                    
                     <div class="form-actions">
-                        <button type="button" id="cancelAddProcedure" class="btn btn-secondary">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" id="cancelAddProcedure" class="btn-secondary">Отмена</button>
+                        <button type="submit" class="btn-primary">Добавить</button>
                     </div>
                 </form>
             </div>
@@ -161,16 +152,14 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <div id="viewProcedureContent" class="procedure-details">
-                    <!-- Детали процедуры будут добавляться динамически -->
+                <div id="viewProcedureContent" class="modal-body">
+                    <!-- Содержимое будет добавляться динамически -->
                 </div>
-                
                 <div class="modal-actions">
-                    <button id="editProcedureBtn" class="btn btn-secondary">
+                    <button id="editProcedureBtn" class="btn-secondary">
                         <i class="fas fa-edit"></i> Редактировать
                     </button>
-                    <button id="deleteProcedureBtn" class="btn btn-danger">
+                    <button id="deleteProcedureBtn" class="btn-danger">
                         <i class="fas fa-trash"></i> Удалить
                     </button>
                 </div>
@@ -186,42 +175,36 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <form id="editProcedureForm" class="procedure-form">
+                <form id="editProcedureForm">
                     <div class="form-group">
-                        <label>Название процедуры</label>
-                        <input type="text" id="editProcedureName" required>
+                        <label for="editProcedureName">Название процедуры *</label>
+                        <input type="text" id="editProcedureName" name="editProcedureName" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Дата процедуры</label>
-                        <input type="date" id="editProcedureDate" required>
+                        <label for="editProcedureDate">Дата процедуры *</label>
+                        <input type="date" id="editProcedureDate" name="editProcedureDate" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Что было изменено</label>
-                        <textarea id="editProcedureChanges" rows="3" required></textarea>
+                        <label for="editProcedureChanges">Что было изменено *</label>
+                        <textarea id="editProcedureChanges" name="editProcedureChanges" rows="3" required></textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Кто проводил</label>
-                        <input type="text" id="editProcedureSpecialist" required>
+                        <label for="editProcedureSpecialist">Кто проводил *</label>
+                        <input type="text" id="editProcedureSpecialist" name="editProcedureSpecialist" required>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Дополнительные заметки</label>
-                        <textarea id="editProcedureNotes" rows="2"></textarea>
+                        <label for="editProcedureNotes">Дополнительные заметки</label>
+                        <textarea id="editProcedureNotes" name="editProcedureNotes" rows="2"></textarea>
                     </div>
-                    
                     <div class="form-actions">
-                        <button type="button" id="cancelEditProcedure" class="btn btn-secondary">Отмена</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" id="cancelEditProcedure" class="btn-secondary">Отмена</button>
+                        <button type="submit" class="btn-primary">Сохранить</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Модальное окно просмотра клиента (для админа) -->
+        <!-- Модальное окно просмотра клиента -->
         <div id="viewClientModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
@@ -230,14 +213,17 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
-                <div id="viewClientContent" class="client-details">
-                    <!-- Детали клиента будут добавляться динамически -->
+                <div id="viewClientContent" class="modal-body">
+                    <!-- Содержимое будет добавляться динамически -->
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <!-- Загружаем скрипты после DOM -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-service.js"></script>
+    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

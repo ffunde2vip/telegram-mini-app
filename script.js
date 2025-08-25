@@ -11,6 +11,7 @@ let currentRole = null;
 let procedures = [];
 let clients = [];
 let currentProcedureId = null;
+let firebaseInitialized = false;
 
 // Элементы DOM
 const loadingScreen = document.getElementById('loadingScreen');
@@ -33,9 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // Инициализация приложения
 async function initializeApp() {
     try {
+        console.log('🚀 Инициализация приложения...');
+        
+        // Проверяем инициализацию Firebase
+        await checkFirebaseInitialization();
+        
+        if (!firebaseInitialized) {
+            throw new Error('Firebase не удалось инициализировать');
+        }
+        
         // Аутентификация в Firebase
         await window.auth.signInAnonymously();
-        console.log('Аутентификация в Firebase успешна');
+        console.log('✅ Аутентификация в Firebase успешна');
         
         // Получаем данные пользователя
         const user = tg.initDataUnsafe?.user;
@@ -50,6 +60,8 @@ async function initializeApp() {
                 city: 'Москва', // По умолчанию
                 street: 'ул. Примерная' // По умолчанию
             };
+            
+            console.log('👤 Данные пользователя получены:', currentUser);
             
             // Автоматически определяем роль пользователя
             if (isAdmin(currentUser.id)) {
@@ -71,10 +83,12 @@ async function initializeApp() {
                 city: 'Москва',
                 street: 'ул. Примерная'
             };
+            console.log('👤 Используем гостевой режим');
             await showUserInterface();
         }
     } catch (error) {
-        console.error('Ошибка аутентификации:', error);
+        console.error('❌ Ошибка инициализации приложения:', error);
+        
         // Показываем интерфейс пользователя даже при ошибке аутентификации
         currentUser = {
             id: 'unknown',
@@ -85,7 +99,44 @@ async function initializeApp() {
             city: 'Москва',
             street: 'ул. Примерная'
         };
+        
+        // Показываем ошибку пользователю
+        showErrorMessage('Ошибка инициализации приложения. Попробуйте перезагрузить страницу.');
+        
         await showUserInterface();
+    }
+}
+
+// Проверка инициализации Firebase
+async function checkFirebaseInitialization() {
+    try {
+        console.log('🔍 Проверка инициализации Firebase...');
+        
+        // Ждем немного для загрузки Firebase
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        if (!window.db || !window.auth) {
+            throw new Error('Firebase объекты не найдены');
+        }
+        
+        // Проверяем подключение к Firebase
+        const connectionStatus = await window.firebaseService.checkConnection();
+        
+        if (!connectionStatus.connected) {
+            throw new Error(`Ошибка подключения к Firebase: ${connectionStatus.error}`);
+        }
+        
+        firebaseInitialized = true;
+        console.log('✅ Firebase успешно инициализирован и подключен');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Ошибка инициализации Firebase:', error);
+        firebaseInitialized = false;
+        
+        // Показываем ошибку пользователю
+        showErrorMessage('Ошибка подключения к базе данных. Проверьте интернет-соединение.');
+        return false;
     }
 }
 
@@ -341,35 +392,93 @@ function hideAddProcedureModal() {
 async function handleAddProcedure(event) {
     event.preventDefault();
     
-    const formData = new FormData(event.target);
-    const procedure = {
-        id: Date.now().toString(),
-        name: formData.get('procedureName') || document.getElementById('procedureName').value,
-        date: formData.get('procedureDate') || document.getElementById('procedureDate').value,
-        changes: formData.get('procedureChanges') || document.getElementById('procedureChanges').value,
-        specialist: formData.get('procedureSpecialist') || document.getElementById('procedureSpecialist').value,
-        notes: formData.get('procedureNotes') || document.getElementById('procedureNotes').value,
-        userName: currentUser.firstName + ' ' + currentUser.lastName,
-        userId: currentUser.id,
-        createdAt: new Date().toISOString()
-    };
-    
-    // Сохраняем в Firebase
-    const success = await window.firebaseService.saveProcedure(currentUser.id, procedure);
-    
-    if (success) {
-        procedures.unshift(procedure);
-        renderProcedures();
-        hideAddProcedureModal();
+    try {
+        console.log('🔄 Начало добавления процедуры...');
         
-        // Отправляем данные в бот
-        sendDataToBot({
-            action: 'add_procedure',
-            procedure: procedure,
-            user: currentUser
-        });
-    } else {
-        alert('Ошибка сохранения процедуры. Попробуйте еще раз.');
+        // Проверяем инициализацию Firebase
+        if (!firebaseInitialized) {
+            throw new Error('База данных не инициализирована');
+        }
+        
+        // Получаем данные формы
+        const formData = new FormData(event.target);
+        const procedureName = formData.get('procedureName') || document.getElementById('procedureName').value;
+        const procedureDate = formData.get('procedureDate') || document.getElementById('procedureDate').value;
+        const procedureChanges = formData.get('procedureChanges') || document.getElementById('procedureChanges').value;
+        const procedureSpecialist = formData.get('procedureSpecialist') || document.getElementById('procedureSpecialist').value;
+        const procedureNotes = formData.get('procedureNotes') || document.getElementById('procedureNotes').value;
+        
+        // Валидация данных
+        if (!procedureName.trim()) {
+            throw new Error('Название процедуры обязательно для заполнения');
+        }
+        if (!procedureDate) {
+            throw new Error('Дата процедуры обязательна для заполнения');
+        }
+        if (!procedureChanges.trim()) {
+            throw new Error('Описание изменений обязательно для заполнения');
+        }
+        if (!procedureSpecialist.trim()) {
+            throw new Error('Имя специалиста обязательно для заполнения');
+        }
+        
+        const procedure = {
+            id: Date.now().toString(),
+            name: procedureName.trim(),
+            date: procedureDate,
+            changes: procedureChanges.trim(),
+            specialist: procedureSpecialist.trim(),
+            notes: procedureNotes.trim(),
+            userName: currentUser.firstName + ' ' + currentUser.lastName,
+            userId: currentUser.id,
+            createdAt: new Date().toISOString()
+        };
+        
+        console.log('📝 Данные процедуры подготовлены:', procedure);
+        
+        // Показываем индикатор загрузки
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Сохранение...';
+        submitBtn.disabled = true;
+        
+        // Сохраняем в Firebase
+        const success = await window.firebaseService.saveProcedure(currentUser.id, procedure);
+        
+        if (success) {
+            console.log('✅ Процедура успешно сохранена');
+            
+            // Добавляем в локальный массив
+            procedures.unshift(procedure);
+            renderProcedures();
+            hideAddProcedureModal();
+            
+            // Показываем уведомление об успехе
+            showSuccessMessage('Процедура успешно добавлена!');
+            
+            // Отправляем данные в бот
+            sendDataToBot({
+                action: 'add_procedure',
+                procedure: procedure,
+                user: currentUser
+            });
+        } else {
+            throw new Error('Не удалось сохранить процедуру в базе данных');
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка добавления процедуры:', error);
+        
+        // Показываем ошибку пользователю
+        showErrorMessage(error.message || 'Ошибка сохранения процедуры. Попробуйте еще раз.');
+        
+    } finally {
+        // Восстанавливаем кнопку
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Добавить';
+            submitBtn.disabled = false;
+        }
     }
 }
 
@@ -577,6 +686,84 @@ function sendDataToBot(data) {
     if (tg.initData) {
         tg.sendData(JSON.stringify(data));
     }
+}
+
+// Показ сообщений об ошибках
+function showErrorMessage(message) {
+    console.error('❌ Ошибка:', message);
+    
+    // Создаем уведомление об ошибке
+    const notification = document.createElement('div');
+    notification.className = 'notification error';
+    notification.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="close-notification">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Автоматически удаляем через 10 секунд
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 10000);
+}
+
+// Показ сообщений об успехе
+function showSuccessMessage(message) {
+    console.log('✅ Успех:', message);
+    
+    // Создаем уведомление об успехе
+    const notification = document.createElement('div');
+    notification.className = 'notification success';
+    notification.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="close-notification">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Автоматически удаляем через 5 секунд
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Показ информационных сообщений
+function showInfoMessage(message) {
+    console.log('ℹ️ Информация:', message);
+    
+    // Создаем информационное уведомление
+    const notification = document.createElement('div');
+    notification.className = 'notification info';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="close-notification">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Автоматически удаляем через 7 секунд
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 7000);
 }
 
 // Применение темы Telegram

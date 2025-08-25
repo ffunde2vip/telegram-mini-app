@@ -633,3 +633,127 @@ body {
         color: var(--tg-theme-text-color, #ffffff);
     }
 }
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease-out;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.notification.error {
+    background: #fee;
+    color: #c53030;
+    border-left: 4px solid #e53e3e;
+}
+
+.notification.success {
+    background: #f0fff4;
+    color: #2f855a;
+    border-left: 4px solid #38a169;
+}
+
+.notification.info {
+    background: #eff6ff;
+    color: #2c5282;
+    border-left: 4px solid #3182ce;
+}
+
+.notification i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.notification span {
+    flex: 1;
+}
+
+.close-notification {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.close-notification:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.notification.removing {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+/* Адаптивность для уведомлений */
+@media (max-width: 768px) {
+    .notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        animation: slideInTop 0.3s ease-out;
+    }
+    
+    @keyframes slideInTop {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutTop {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    }
+    
+    .notification.removing {
+        animation: slideOutTop 0.3s ease-in forwards;
+    }
+}
