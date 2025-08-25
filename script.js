@@ -208,7 +208,7 @@ async function showAdminInterface() {
 function updateUserInfo() {
     const userAvatar = document.getElementById('userAvatar');
     const userName = document.getElementById('userName');
-    const userLocation = document.getElementById('userLocation');
+    const userTag = document.getElementById('userTag');
     
     if (currentUser.photoUrl) {
         userAvatar.src = currentUser.photoUrl;
@@ -218,8 +218,11 @@ function updateUserInfo() {
     }
     
     const roleBadge = window.firebaseService.isAdmin(currentUser.id) ? ' (Админ)' : '';
-    userName.textContent = `${currentUser.firstName} ${currentUser.lastName}`.trim() || 'Клиент' + roleBadge;
-    userLocation.textContent = `${currentUser.city}, ${currentUser.street}`;
+    const fullName = `${currentUser.firstName} ${currentUser.lastName}`.trim();
+    userName.textContent = (fullName || 'Клиент') + roleBadge;
+    if (userTag) {
+        userTag.textContent = currentUser.username ? `@${currentUser.username}` : '@username';
+    }
 }
 
 // Загрузка процедур из Firebase
@@ -383,6 +386,8 @@ async function handleAddProcedure(event) {
         const formData = new FormData(event.target);
         const procedureName = formData.get('procedureName') || document.getElementById('procedureName').value;
         const procedureDate = formData.get('procedureDate') || document.getElementById('procedureDate').value;
+        const procedureArea = formData.get('procedureArea') || document.getElementById('procedureArea')?.value || '';
+        const procedureGoal = formData.get('procedureGoal') || document.getElementById('procedureGoal')?.value || '';
         const procedureChanges = formData.get('procedureChanges') || document.getElementById('procedureChanges').value;
         const procedureSpecialist = formData.get('procedureSpecialist') || document.getElementById('procedureSpecialist').value;
         const procedureNotes = formData.get('procedureNotes') || document.getElementById('procedureNotes').value;
@@ -393,6 +398,12 @@ async function handleAddProcedure(event) {
         }
         if (!procedureDate) {
             throw new Error('Дата процедуры обязательна для заполнения');
+        }
+        if (!procedureArea.trim()) {
+            throw new Error('Область/часть тела обязательна для заполнения');
+        }
+        if (!procedureGoal.trim()) {
+            throw new Error('Цель/результат обязательна для заполнения');
         }
         if (!procedureChanges.trim()) {
             throw new Error('Описание изменений обязательно для заполнения');
@@ -405,6 +416,8 @@ async function handleAddProcedure(event) {
             id: Date.now().toString(),
             name: procedureName.trim(),
             date: procedureDate,
+            area: procedureArea.trim(),
+            goal: procedureGoal.trim(),
             changes: procedureChanges.trim(),
             specialist: procedureSpecialist.trim(),
             notes: procedureNotes.trim(),
@@ -480,6 +493,14 @@ function showProcedureDetails(procedureId) {
             <div class="detail-label">Дата процедуры</div>
             <div class="detail-value">${formatDate(procedure.date)}</div>
         </div>
+        <div class=\"detail-item\">
+            <div class=\"detail-label\">Область/часть тела</div>
+            <div class=\"detail-value\">${procedure.area || '-'}</div>
+        </div>
+        <div class=\"detail-item\">
+            <div class=\"detail-label\">Цель/результат</div>
+            <div class=\"detail-value\">${procedure.goal || '-'}</div>
+        </div>
         <div class="detail-item">
             <div class="detail-label">Что было изменено</div>
             <div class="detail-value">${procedure.changes}</div>
@@ -512,6 +533,10 @@ function showEditProcedureModal() {
     
     document.getElementById('editProcedureName').value = procedure.name;
     document.getElementById('editProcedureDate').value = procedure.date;
+    const areaEl = document.getElementById('editProcedureArea');
+    const goalEl = document.getElementById('editProcedureGoal');
+    if (areaEl) areaEl.value = procedure.area || '';
+    if (goalEl) goalEl.value = procedure.goal || '';
     document.getElementById('editProcedureChanges').value = procedure.changes;
     document.getElementById('editProcedureSpecialist').value = procedure.specialist;
     document.getElementById('editProcedureNotes').value = procedure.notes || '';
@@ -536,6 +561,8 @@ async function handleEditProcedure(event) {
     const updatedData = {
         name: formData.get('editProcedureName') || document.getElementById('editProcedureName').value,
         date: formData.get('editProcedureDate') || document.getElementById('editProcedureDate').value,
+        area: formData.get('editProcedureArea') || document.getElementById('editProcedureArea')?.value || '',
+        goal: formData.get('editProcedureGoal') || document.getElementById('editProcedureGoal')?.value || '',
         changes: formData.get('editProcedureChanges') || document.getElementById('editProcedureChanges').value,
         specialist: formData.get('editProcedureSpecialist') || document.getElementById('editProcedureSpecialist').value,
         notes: formData.get('editProcedureNotes') || document.getElementById('editProcedureNotes').value,
