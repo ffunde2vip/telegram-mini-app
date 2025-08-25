@@ -138,16 +138,7 @@ async function checkFirebaseInitialization() {
 
 // Настройка обработчиков событий
 function setupEventListeners() {
-    // Кнопки ролей
-    document.getElementById('userRoleBtn').addEventListener('click', async () => {
-        currentRole = 'user';
-        await showUserInterface();
-    });
-    
-    document.getElementById('adminRoleBtn').addEventListener('click', async () => {
-        currentRole = 'admin';
-        await showAdminInterface();
-    });
+    // Выбор роли не используем — интерфейс определяется автоматически
     
     // Кнопки выхода
     document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -174,6 +165,12 @@ function setupEventListeners() {
     
     // Поиск клиентов
     document.getElementById('searchClients').addEventListener('input', handleSearchClients);
+
+    // Поиск процедур
+    const searchProceduresInput = document.getElementById('searchProcedures');
+    if (searchProceduresInput) {
+        searchProceduresInput.addEventListener('input', handleSearchProcedures);
+    }
 }
 
 // Показать экран авторизации
@@ -251,7 +248,14 @@ function renderProcedures() {
         return;
     }
     
-    proceduresList.innerHTML = procedures
+    const searchTerm = (document.getElementById('searchProcedures')?.value || '').toLowerCase();
+    const filtered = procedures.filter(p => (
+        p.name?.toLowerCase().includes(searchTerm) ||
+        p.changes?.toLowerCase().includes(searchTerm) ||
+        p.specialist?.toLowerCase().includes(searchTerm)
+    ));
+    
+    proceduresList.innerHTML = filtered
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .map(procedure => `
             <div class="procedure-item" data-id="${procedure.id}">
@@ -270,6 +274,11 @@ function renderProcedures() {
             showProcedureDetails(procedureId);
         });
     });
+}
+
+// Поиск по процедурам (пользователь)
+function handleSearchProcedures() {
+    renderProcedures();
 }
 
 // Загрузка клиентов из Firebase
