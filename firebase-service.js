@@ -23,9 +23,14 @@ class FirebaseService {
     async createOrGetUser(telegramId, userInfo) {
         try {
             console.log('🔄 Создание/получение пользователя для Telegram ID:', telegramId);
-            
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            if (!this.auth?.currentUser) {
+                throw new Error('Пользователь не аутентифицирован');
+            }
+
+            const uid = this.auth.currentUser.uid;
+            const userRef = this.db.collection('users').doc(uid);
             const userDoc = await userRef.get();
+            const isAdmin = this.isAdmin(telegramId);
             
             if (!userDoc.exists) {
                 // Создаем нового пользователя
@@ -33,6 +38,7 @@ class FirebaseService {
                 await userRef.set({
                     telegramId: telegramId,
                     ...userInfo,
+                    isAdmin: isAdmin,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
@@ -41,7 +47,8 @@ class FirebaseService {
                 // Обновляем время последнего входа
                 await userRef.update({
                     lastSeen: new Date(),
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    isAdmin: isAdmin
                 });
                 console.log('✅ Пользователь найден, обновлено время входа');
             }
@@ -61,9 +68,13 @@ class FirebaseService {
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
+            if (!this.auth?.currentUser) {
+                throw new Error('Пользователь не аутентифицирован');
+            }
 
             // Создаем процедуру
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            const uid = this.auth.currentUser.uid;
+            const userRef = this.db.collection('users').doc(uid);
             const proceduresRef = userRef.collection('procedures');
             
             const procedureData = {
@@ -90,8 +101,12 @@ class FirebaseService {
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
+            if (!this.auth?.currentUser) {
+                throw new Error('Пользователь не аутентифицирован');
+            }
 
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            const uid = this.auth.currentUser.uid;
+            const userRef = this.db.collection('users').doc(uid);
             const proceduresRef = userRef.collection('procedures');
             const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
             
@@ -119,8 +134,12 @@ class FirebaseService {
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
+            if (!this.auth?.currentUser) {
+                throw new Error('Пользователь не аутентифицирован');
+            }
 
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            const uid = this.auth.currentUser.uid;
+            const userRef = this.db.collection('users').doc(uid);
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             const updateData = {
@@ -146,8 +165,12 @@ class FirebaseService {
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
+            if (!this.auth?.currentUser) {
+                throw new Error('Пользователь не аутентифицирован');
+            }
 
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            const uid = this.auth.currentUser.uid;
+            const userRef = this.db.collection('users').doc(uid);
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             await procedureRef.delete();
@@ -199,15 +222,14 @@ class FirebaseService {
     }
 
     // Получение процедур конкретного пользователя (для администратора)
-    async getUserProceduresForAdmin(telegramId) {
+    async getUserProceduresForAdmin(userUid) {
         try {
-            console.log('🔄 Загрузка процедур пользователя для админа:', telegramId);
+            console.log('🔄 Загрузка процедур пользователя для админа:', userUid);
             
             if (!this.db) {
                 throw new Error('Firebase Firestore не инициализирован');
             }
-
-            const userRef = this.db.collection('users').doc(telegramId.toString());
+            const userRef = this.db.collection('users').doc(userUid.toString());
             const proceduresRef = userRef.collection('procedures');
             const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
             
