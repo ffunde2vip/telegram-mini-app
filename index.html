@@ -31,12 +31,12 @@
 
         <!-- Интерфейс пользователя -->
         <div id="userInterface" class="hidden">
-            <div class="header">
+            <div class="header header-dark">
                 <div class="user-info">
                     <img id="userAvatar" class="avatar" alt="Аватар" style="display:none;" />
                     <div class="user-details">
                         <h2 id="userName">Клиент</h2>
-                        <p id="userLocation">Город, улица</p>
+                        <p id="userTag" class="user-tag">@username</p>
                     </div>
                 </div>
                 <button id="logoutBtn" class="logout-btn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
@@ -85,12 +85,20 @@
                 </div>
                 <form id="addProcedureForm" class="procedure-form">
                     <div class="form-group">
-                        <label for="procedureName">Название процедуры *</nlabel>
+                        <label for="procedureName">Название процедуры *</label>
                         <input type="text" id="procedureName" name="procedureName" required>
                     </div>
                     <div class="form-group">
                         <label for="procedureDate">Дата процедуры *</label>
                         <input type="date" id="procedureDate" name="procedureDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="procedureArea">Область/часть тела *</label>
+                        <input type="text" id="procedureArea" name="procedureArea" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="procedureGoal">Цель/результат *</label>
+                        <input type="text" id="procedureGoal" name="procedureGoal" required>
                     </div>
                     <div class="form-group">
                         <label for="procedureChanges">Что было изменено *</label>
@@ -142,6 +150,14 @@
                     <div class="form-group">
                         <label for="editProcedureDate">Дата процедуры *</label>
                         <input type="date" id="editProcedureDate" name="editProcedureDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProcedureArea">Область/часть тела *</label>
+                        <input type="text" id="editProcedureArea" name="editProcedureArea" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProcedureGoal">Цель/результат *</label>
+                        <input type="text" id="editProcedureGoal" name="editProcedureGoal" required>
                     </div>
                     <div class="form-group">
                         <label for="editProcedureChanges">Что было изменено *</label>
