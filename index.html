@@ -7,47 +7,81 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <!-- Выбор роли -->
-        <div id="roleSelection" class="role-selection">
-            <h1>Косметология</h1>
-            <p>Выберите роль для входа</p>
-            <div class="role-buttons">
-                <button onclick="selectRole('client')" class="role-btn">Клиент</button>
-                <button onclick="selectRole('admin')" class="role-btn">Администратор</button>
+    <div id="app" class="container">
+        <!-- Экран загрузки -->
+        <div id="loadingScreen" class="loading-screen hidden">
+            <div class="loading-spinner"></div>
+            <div>Загрузка...</div>
+        </div>
+
+        <!-- Экран выбора роли/авторизации -->
+        <div id="authScreen" class="auth-screen">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <i class="fas fa-spa"></i>
+                    <h1>Косметология</h1>
+                    <p>Выберите роль для входа</p>
+                </div>
+                <div class="role-buttons">
+                    <button id="userRoleBtn" class="role-btn"><i class="fas fa-user"></i> Клиент</button>
+                    <button id="adminRoleBtn" class="role-btn"><i class="fas fa-user-shield"></i> Администратор</button>
+                </div>
             </div>
         </div>
 
-        <!-- Интерфейс клиента -->
-        <div id="clientInterface" class="interface hidden">
-            <h2>Клиент</h2>
-            <div class="user-info">
-                <span id="userLocation">Город, улица</span>
+        <!-- Интерфейс пользователя -->
+        <div id="userInterface" class="hidden">
+            <div class="header">
+                <div class="user-info">
+                    <img id="userAvatar" class="avatar" alt="Аватар" style="display:none;" />
+                    <div class="user-details">
+                        <h2 id="userName">Клиент</h2>
+                        <p id="userLocation">Город, улица</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
             </div>
-            
-            <h3>Мои процедуры</h3>
-            <div id="proceduresList"></div>
-            
-            <button onclick="showAddProcedureForm()" class="add-btn">Добавить процедуру</button>
+            <div class="content">
+                <div class="section-header">
+                    <h3>Мои процедуры</h3>
+                    <button id="addProcedureBtn" class="add-btn"><i class="fas fa-plus"></i> Добавить процедуру</button>
+                </div>
+                <div id="proceduresList" class="procedures-list"></div>
+            </div>
         </div>
 
         <!-- Интерфейс администратора -->
-        <div id="adminInterface" class="interface hidden">
-            <h2>Панель администратора</h2>
-            
-            <h3>Список клиентов</h3>
-            <div id="clientsList"></div>
-            
-            <button onclick="showAddProcedureForm()" class="add-btn">Добавить процедуру</button>
+        <div id="adminInterface" class="hidden">
+            <div class="header">
+                <div class="admin-info">
+                    <div class="user-details">
+                        <h2>Панель администратора</h2>
+                    </div>
+                </div>
+                <button id="adminLogoutBtn" class="logout-btn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+            <div class="content">
+                <div class="section-header">
+                    <h3>Список клиентов</h3>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input id="searchClients" type="text" placeholder="Поиск клиентов..." />
+                    </div>
+                </div>
+                <div id="clientsList" class="clients-list"></div>
+            </div>
         </div>
 
         <!-- Модальное окно добавления процедуры -->
         <div id="addProcedureModal" class="modal hidden">
             <div class="modal-content">
-                <h3>Добавить процедуру</h3>
-                <form id="addProcedureForm">
+                <div class="modal-header">
+                    <h3>Добавить процедуру</h3>
+                    <button id="closeAddModal" class="close-btn" title="Закрыть">✕</button>
+                </div>
+                <form id="addProcedureForm" class="procedure-form">
                     <div class="form-group">
-                        <label for="procedureName">Название процедуры *</label>
+                        <label for="procedureName">Название процедуры *</nlabel>
                         <input type="text" id="procedureName" name="procedureName" required>
                     </div>
                     <div class="form-group">
@@ -67,22 +101,24 @@
                         <textarea id="procedureNotes" name="procedureNotes"></textarea>
                     </div>
                     <div class="form-actions">
-                        <button type="button" onclick="hideAddProcedureForm()" class="cancel-btn">Отмена</button>
-                        <button type="submit" class="submit-btn">Добавить</button>
+                        <button type="button" id="cancelAddProcedure" class="btn btn-secondary">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Добавить</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Модальное окно деталей процедуры -->
-        <div id="procedureDetailsModal" class="modal hidden">
+        <!-- Модальное окно просмотра процедуры -->
+        <div id="viewProcedureModal" class="modal hidden">
             <div class="modal-content">
-                <h3>Детали процедуры</h3>
-                <div id="procedureDetails"></div>
+                <div class="modal-header">
+                    <h3 id="viewProcedureTitle">Детали процедуры</h3>
+                    <button id="closeViewModal" class="close-btn" title="Закрыть">✕</button>
+                </div>
+                <div id="viewProcedureContent" class="procedure-details"></div>
                 <div class="modal-actions">
-                    <button onclick="editProcedure()" class="edit-btn">Редактировать</button>
-                    <button onclick="deleteProcedure()" class="delete-btn">Удалить</button>
-                    <button onclick="hideProcedureDetails()" class="cancel-btn">Отмена</button>
+                    <button id="editProcedureBtn" class="btn btn-primary">Редактировать</button>
+                    <button id="deleteProcedureBtn" class="btn btn-danger">Удалить</button>
                 </div>
             </div>
         </div>
@@ -90,8 +126,11 @@
         <!-- Модальное окно редактирования процедуры -->
         <div id="editProcedureModal" class="modal hidden">
             <div class="modal-content">
-                <h3>Редактировать процедуру</h3>
-                <form id="editProcedureForm">
+                <div class="modal-header">
+                    <h3>Редактировать процедуру</h3>
+                    <button id="closeEditModal" class="close-btn" title="Закрыть">✕</button>
+                </div>
+                <form id="editProcedureForm" class="procedure-form">
                     <div class="form-group">
                         <label for="editProcedureName">Название процедуры *</label>
                         <input type="text" id="editProcedureName" name="editProcedureName" required>
@@ -113,19 +152,21 @@
                         <textarea id="editProcedureNotes" name="editProcedureNotes"></textarea>
                     </div>
                     <div class="form-actions">
-                        <button type="button" onclick="hideEditProcedureForm()" class="cancel-btn">Отмена</button>
-                        <button type="submit" class="submit-btn">Сохранить</button>
+                        <button type="button" id="cancelEditProcedure" class="btn btn-secondary">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Модальное окно процедур клиента -->
-        <div id="clientProceduresModal" class="modal hidden">
+        <div id="viewClientModal" class="modal hidden">
             <div class="modal-content">
-                <h3>Процедуры клиента</h3>
-                <div id="clientProceduresList"></div>
-                <button onclick="hideClientProcedures()" class="cancel-btn">Закрыть</button>
+                <div class="modal-header">
+                    <h3 id="viewClientTitle">Процедуры клиента</h3>
+                    <button id="closeClientModal" class="close-btn" title="Закрыть">✕</button>
+                </div>
+                <div id="viewClientContent" class="procedure-details"></div>
             </div>
         </div>
     </div>
