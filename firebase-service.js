@@ -264,6 +264,21 @@ class FirebaseService {
         }
     }
 
+    // Получение профиля пользователя по его Telegram ID/UID
+    async getUserById(userUid) {
+        try {
+            if (!this.db) {
+                throw new Error('Firebase Firestore не инициализирован');
+            }
+            const doc = await this.db.collection('users').doc(userUid.toString()).get();
+            if (!doc.exists) return null;
+            return { id: doc.id, ...doc.data() };
+        } catch (e) {
+            console.error('❌ Ошибка получения пользователя:', e);
+            return null;
+        }
+    }
+
     // Режим реального времени для процедур конкретного пользователя (для админа)
     onUserProceduresSnapshot(userUid, callback) {
         if (!this.db) return () => {};
