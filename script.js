@@ -191,6 +191,12 @@ async function showUserInterface() {
     setHidden(authScreen, true);
     setHidden(userInterface, false);
     setHidden(adminInterface, true);
+    console.log('[UI] showUserInterface: classes', {
+        loading: loadingScreen?.className,
+        auth: authScreen?.className,
+        user: userInterface?.className,
+        admin: adminInterface?.className
+    });
     
     updateUserInfo();
     await loadProcedures();
@@ -203,6 +209,12 @@ async function showAdminInterface() {
     setHidden(authScreen, true);
     setHidden(userInterface, true);
     setHidden(adminInterface, false);
+    console.log('[UI] showAdminInterface: classes', {
+        loading: loadingScreen?.className,
+        auth: authScreen?.className,
+        user: userInterface?.className,
+        admin: adminInterface?.className
+    });
     
     await loadClients();
     renderClients();
