@@ -31,7 +31,7 @@ class FirebaseService {
             // Документ пользователя — по Telegram ID, чтобы идентификатор не менялся между анонимными сессиями
             const userRef = this.db.collection('users').doc(telegramId.toString());
             const userDoc = await userRef.get();
-            const isAdmin = this.isAdmin(telegramId);
+            const isAdminDefault = this.isAdmin(telegramId);
             
             if (!userDoc.exists) {
                 // Создаем нового пользователя
@@ -39,7 +39,8 @@ class FirebaseService {
                 await userRef.set({
                     telegramId: telegramId,
                     ...userInfo,
-                    isAdmin: isAdmin,
+                    // Инициализируем isAdmin только при создании (дальше может быть изменен ботом/веб‑приложением)
+                    isAdmin: isAdminDefault,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
@@ -48,8 +49,7 @@ class FirebaseService {
                 // Обновляем время последнего входа
                 await userRef.update({
                     lastSeen: new Date(),
-                    updatedAt: new Date(),
-                    isAdmin: isAdmin
+                    updatedAt: new Date()
                 });
                 console.log('✅ Пользователь найден, обновлено время входа');
             }
@@ -303,6 +303,12 @@ class FirebaseService {
     // Проверка является ли пользователь администратором
     isAdmin(telegramId) {
         const adminIds = ['1435191157']; // ID администратора
+        // Локальный флаг (устанавливается после чтения профиля)
+        try {
+            if (window._userIsAdminFlag && window._currentTelegramId && window._currentTelegramId.toString() === telegramId.toString()) {
+                return true;
+            }
+        } catch (e) {}
         return adminIds.includes(telegramId.toString());
     }
 
@@ -324,6 +330,21 @@ class FirebaseService {
             return { connected: true };
         } catch (error) {
             return { connected: false, error: error.message };
+        }
+    }
+
+    // Проставить/снять флаг администратора у пользователя
+    async setAdminFlag(telegramId, isAdminFlag) {
+        try {
+            const ref = this.db.collection('users').doc(telegramId.toString());
+            await ref.set({ isAdmin: !!isAdminFlag, updatedAt: new Date() }, { merge: true });
+            if (window._currentTelegramId && window._currentTelegramId.toString() === telegramId.toString()) {
+                window._userIsAdminFlag = !!isAdminFlag;
+            }
+            return true;
+        } catch (e) {
+            console.error('❌ Не удалось установить флаг администратора:', e);
+            return false;
         }
     }
 }
