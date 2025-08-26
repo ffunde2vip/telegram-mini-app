@@ -692,6 +692,9 @@ async function showClientDetails(clientId) {
                 </div>
             `;
         } else {
+            const sorted = clientProcedures
+                .slice()
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
             content.innerHTML = `
                 <div class="client-info-header">
                     <img src="${client.photoUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeXg9IjIwIiBjeT0iMjAiIHI9IjIwIiBmaWxsPSIjZTllY2VmIi8+CjxwYXRoIGQ9Ik0yMCAxMEMyMi4yMDkxIDEwIDI0IDExLjc5MDkgMjQgMTRDMjQgMTYuMjA5MSAyMi4yMDkxIDE4IDIwIDE4QzE3Ljc5MDkgMTggMTYgMTYuMjA5MSAxNiAxNEMxNiAxMS43OTA5IDE3Ljc5MDkgMTAgMjAgMTBaIiBmaWxsPSIjNjY2NjY2Ii8+CjxwYXRoIGQ9Ik0yOCAzMEMyOCAyNi42ODYzIDI0LjQxODMgMjQgMjAgMjRDMTUuNTgxNyAyNCAxMiAyNi42ODYzIDEyIDMwSDI4WiIgZmlsbD0iIzY2NjY2NiIvPgo8L3N2Zz4K'}" alt="Аватар" class="client-avatar">
@@ -702,10 +705,9 @@ async function showClientDetails(clientId) {
                     </div>
                 </div>
                 <div class="procedures-list">
-                    ${clientProcedures
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    ${sorted
                         .map(procedure => `
-                            <div class="procedure-item">
+                            <div class="procedure-item" data-id="${procedure.id}">
                                 <div class="procedure-header">
                                     <div class="procedure-title">${procedure.name}</div>
                                     <div class="procedure-date">${formatDate(procedure.date)}</div>
@@ -716,6 +718,15 @@ async function showClientDetails(clientId) {
                         `).join('')}
                 </div>
             `;
+
+            // Обработчики клика по процедурам для показа подробностей (read‑only)
+            content.querySelectorAll('.procedure-item').forEach(item => {
+                const id = item.getAttribute('data-id');
+                const proc = clientProcedures.find(p => p.id === id);
+                if (proc) {
+                    item.addEventListener('click', () => showProcedureDetailsReadOnly(proc));
+                }
+            });
         }
         
         setHidden(viewClientModal, false);
@@ -728,6 +739,50 @@ async function showClientDetails(clientId) {
 // Скрыть модальное окно просмотра клиента
 function hideViewClientModal() {
     setHidden(viewClientModal, true);
+}
+
+// Просмотр процедуры в режиме только чтение (для админа)
+function showProcedureDetailsReadOnly(procedure) {
+    if (!procedure) return;
+    currentProcedureId = null; // режим чтения
+    document.getElementById('viewProcedureTitle').textContent = procedure.name;
+    const content = document.getElementById('viewProcedureContent');
+    content.innerHTML = `
+        <div class="detail-item">
+            <div class="detail-label">Название процедуры</div>
+            <div class="detail-value">${procedure.name}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Дата процедуры</div>
+            <div class="detail-value">${formatDate(procedure.date)}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Область/часть тела</div>
+            <div class="detail-value">${procedure.area || '-'}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Цель/результат</div>
+            <div class="detail-value">${procedure.goal || '-'}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Что было изменено</div>
+            <div class="detail-value">${procedure.changes}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Кто проводил</div>
+            <div class="detail-value">${procedure.specialist}</div>
+        </div>
+        ${procedure.notes ? `
+        <div class="detail-item">
+            <div class="detail-label">Дополнительные заметки</div>
+            <div class="detail-value">${procedure.notes}</div>
+        </div>
+        ` : ''}
+    `;
+    // Скрываем кнопки редактирования/удаления
+    document.getElementById('editProcedureBtn')?.classList.add('hidden');
+    document.getElementById('deleteProcedureBtn')?.classList.add('hidden');
+    setHidden(viewProcedureModal, false);
 }
 
 // Выход из системы
