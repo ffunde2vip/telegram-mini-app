@@ -187,6 +187,20 @@ function setupEventListeners() {
     if (searchProceduresInput) {
         searchProceduresInput.addEventListener('input', handleSearchProcedures);
     }
+
+    // Кнопка обновления списка клиентов (админ)
+    const refreshBtn = document.getElementById('refreshClientsBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.disabled = true;
+            const original = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-sync"></i> Обновление...';
+            await loadClients();
+            renderClients();
+            refreshBtn.innerHTML = original;
+            refreshBtn.disabled = false;
+        });
+    }
 }
 
 // Показать экран авторизации
@@ -228,8 +242,12 @@ async function showAdminInterface() {
         admin: adminInterface?.className
     });
     
-    await loadClients();
-    renderClients();
+    // Live обновление списка клиентов (авторы процедур)
+    if (window._usersUnsub) { try { window._usersUnsub(); } catch (e) {} }
+    window._usersUnsub = window.firebaseService.onUsersWithProceduresSnapshot((list) => {
+        clients = list;
+        renderClients();
+    });
 }
 
 // Обновить информацию о пользователе
@@ -482,6 +500,14 @@ async function handleAddProcedure(event) {
                 procedure: procedure,
                 user: currentUser
             });
+
+            // Админ увидит изменения мгновенно через live‑слушатель, но на всякий случай мягко обновим список
+            if (document.getElementById('adminInterface') && !document.getElementById('adminInterface').classList.contains('hidden')) {
+                try {
+                    await loadClients();
+                    renderClients();
+                } catch (e) {}
+            }
         } else {
             throw new Error('Не удалось сохранить процедуру в базе данных');
         }
@@ -611,6 +637,11 @@ async function handleEditProcedure(event) {
             procedure: procedures[procedureIndex],
             user: currentUser
         });
+
+        // Обновим список клиентов для админа
+        if (window.firebaseService.isAdmin(currentUser.id)) {
+            // ничего не делаем, админский список обновится через live‑слушатель
+        }
     } else {
         alert('Ошибка обновления процедуры. Попробуйте еще раз.');
     }
