@@ -106,6 +106,39 @@ def make_admin(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Ошибка: {e}")
 
+# /unadmin <password> — снимает права администратора
+@bot.message_handler(commands=['unadmin'])
+def remove_admin(message):
+    try:
+        parts = message.text.split(maxsplit=1)
+        provided = parts[1].strip() if len(parts) > 1 else ""
+        if provided != ADMIN_SHARED_PASSWORD:
+            bot.reply_to(message, "❌ Неверный пароль.")
+            return
+
+        telegram_id = str(message.from_user.id)
+
+        if db is not None:
+            try:
+                doc_ref = db.collection('users').document(telegram_id)
+                doc_ref.set({'isAdmin': False}, merge=True)
+                bot.reply_to(message, "✅ Права администратора сняты. Перезапустите мини‑приложение.")
+                return
+            except Exception as e:
+                bot.reply_to(message, f"❌ Firestore admin SDK ошибка: {e}")
+                return
+
+        url = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PROJECT_ID}/databases/(default)/documents/users/{telegram_id}?currentDocument.exists=true"
+        payload = {"fields": {"isAdmin": {"booleanValue": False}}}
+        params = {"updateMask.fieldPaths": ["isAdmin"]}
+        r = requests.patch(url, json=payload, params=params)
+        if 200 <= r.status_code < 300:
+            bot.reply_to(message, "✅ Права администратора сняты. Перезапустите мини‑приложение.")
+        else:
+            bot.reply_to(message, f"❌ Не удалось обновить профиль (код {r.status_code}).")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Ошибка: {e}")
+
 # Обработчик данных от веб-приложения
 @bot.message_handler(content_types=['web_app_data'])
 def web_app_handler(message):
