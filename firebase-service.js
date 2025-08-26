@@ -27,8 +27,8 @@ class FirebaseService {
                 throw new Error('Пользователь не аутентифицирован');
             }
 
-            const uid = this.auth.currentUser.uid;
-            const userRef = this.db.collection('users').doc(uid);
+            // Документ пользователя — по Telegram ID, чтобы идентификатор не менялся между анонимными сессиями
+            const userRef = this.db.collection('users').doc(telegramId.toString());
             const userDoc = await userRef.get();
             const isAdmin = this.isAdmin(telegramId);
             
@@ -73,8 +73,7 @@ class FirebaseService {
             }
 
             // Создаем процедуру
-            const uid = this.auth.currentUser.uid;
-            const userRef = this.db.collection('users').doc(uid);
+            const userRef = this.db.collection('users').doc(telegramId.toString());
             const proceduresRef = userRef.collection('procedures');
             
             const procedureData = {
@@ -105,8 +104,7 @@ class FirebaseService {
                 throw new Error('Пользователь не аутентифицирован');
             }
 
-            const uid = this.auth.currentUser.uid;
-            const userRef = this.db.collection('users').doc(uid);
+            const userRef = this.db.collection('users').doc(telegramId.toString());
             const proceduresRef = userRef.collection('procedures');
             const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
             
@@ -138,8 +136,7 @@ class FirebaseService {
                 throw new Error('Пользователь не аутентифицирован');
             }
 
-            const uid = this.auth.currentUser.uid;
-            const userRef = this.db.collection('users').doc(uid);
+            const userRef = this.db.collection('users').doc(telegramId.toString());
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             const updateData = {
@@ -169,8 +166,7 @@ class FirebaseService {
                 throw new Error('Пользователь не аутентифицирован');
             }
 
-            const uid = this.auth.currentUser.uid;
-            const userRef = this.db.collection('users').doc(uid);
+            const userRef = this.db.collection('users').doc(telegramId.toString());
             const procedureRef = userRef.collection('procedures').doc(procedureId);
             
             await procedureRef.delete();
@@ -265,10 +261,10 @@ class FirebaseService {
                 return { connected: false, error: 'Нет аутентифицированного пользователя' };
             }
 
-            // Безопасная проверка в рамках правил: читаем собственный документ
+            // Безопасная операция в рамках правил: создаем/обновляем собственный документ (merge)
             const uid = this.auth.currentUser.uid;
             const userDocRef = this.db.collection('users').doc(uid);
-            await userDocRef.get();
+            await userDocRef.set({ _lastPing: new Date() }, { merge: true });
             
             return { connected: true };
         } catch (error) {
