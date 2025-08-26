@@ -36,6 +36,18 @@ function setHidden(element, hidden) {
     element.classList.toggle('hidden', !!hidden);
 }
 
+function forceShow(element, display = 'block') {
+    if (!element) return;
+    element.classList.remove('hidden');
+    element.style.display = display;
+}
+
+function forceHide(element) {
+    if (!element) return;
+    element.style.display = 'none';
+    element.classList.add('hidden');
+}
+
 // Инициализация приложения
 async function initializeApp() {
     try {
@@ -187,10 +199,10 @@ function showAuthScreen() {
 
 // Показать интерфейс пользователя
 async function showUserInterface() {
-    setHidden(loadingScreen, true);
-    setHidden(authScreen, true);
-    setHidden(userInterface, false);
-    setHidden(adminInterface, true);
+    forceHide(loadingScreen);
+    forceHide(authScreen);
+    forceShow(userInterface, 'block');
+    forceHide(adminInterface);
     console.log('[UI] showUserInterface: classes', {
         loading: loadingScreen?.className,
         auth: authScreen?.className,
@@ -205,10 +217,10 @@ async function showUserInterface() {
 
 // Показать интерфейс администратора
 async function showAdminInterface() {
-    setHidden(loadingScreen, true);
-    setHidden(authScreen, true);
-    setHidden(userInterface, true);
-    setHidden(adminInterface, false);
+    forceHide(loadingScreen);
+    forceHide(authScreen);
+    forceHide(userInterface);
+    forceShow(adminInterface, 'block');
     console.log('[UI] showAdminInterface: classes', {
         loading: loadingScreen?.className,
         auth: authScreen?.className,
