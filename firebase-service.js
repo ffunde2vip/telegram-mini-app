@@ -300,15 +300,14 @@ class FirebaseService {
     }
 
     // Проверка является ли пользователь администратором
+    // Больше НЕТ жёстко заданных ID. Только флаг isAdmin из профиля.
     isAdmin(telegramId) {
-        const adminIds = ['1435191157']; // ID администратора
-        // Локальный флаг (устанавливается после чтения профиля)
         try {
             if (window._userIsAdminFlag && window._currentTelegramId && window._currentTelegramId.toString() === telegramId.toString()) {
                 return true;
             }
         } catch (e) {}
-        return adminIds.includes(telegramId.toString());
+        return false;
     }
 
     // Проверка состояния подключения к Firebase
