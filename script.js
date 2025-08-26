@@ -36,16 +36,15 @@ async function initializeApp() {
     try {
         console.log('🚀 Инициализация приложения...');
         
-        // Проверяем инициализацию Firebase
-        await checkFirebaseInitialization();
+        // Аутентификация в Firebase (сначала входим, затем проверяем соединение)
+        await window.auth.signInAnonymously();
+        console.log('✅ Аутентификация в Firebase успешна');
         
+        // Проверяем подключение к Firebase после входа
+        await checkFirebaseInitialization();
         if (!firebaseInitialized) {
             throw new Error('Firebase не удалось инициализировать');
         }
-        
-        // Аутентификация в Firebase
-        await window.auth.signInAnonymously();
-        console.log('✅ Аутентификация в Firebase успешна');
         
         // Получаем данные пользователя
         const user = tg.initDataUnsafe?.user;
