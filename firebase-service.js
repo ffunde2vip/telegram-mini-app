@@ -261,10 +261,14 @@ class FirebaseService {
             if (!this.db) {
                 return { connected: false, error: 'Firebase не инициализирован' };
             }
-            
-            // Пробуем выполнить простую операцию
-            const testRef = this.db.collection('_test_connection');
-            await testRef.limit(1).get();
+            if (!this.auth?.currentUser) {
+                return { connected: false, error: 'Нет аутентифицированного пользователя' };
+            }
+
+            // Безопасная проверка в рамках правил: читаем собственный документ
+            const uid = this.auth.currentUser.uid;
+            const userDocRef = this.db.collection('users').doc(uid);
+            await userDocRef.get();
             
             return { connected: true };
         } catch (error) {
