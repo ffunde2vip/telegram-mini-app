@@ -1,17 +1,18 @@
-// Инициализация Telegram Web App
-let tg = window.Telegram.WebApp;
+// Инициализация Telegram Web App (устойчиво к двойной загрузке скрипта)
+var tg = window.tg || window.Telegram.WebApp;
+window.tg = tg;
 
 // Инициализация приложения
 tg.ready();
 tg.expand();
 
-// Глобальные переменные
-let currentUser = null;
-let currentRole = null;
-let procedures = [];
-let clients = [];
-let currentProcedureId = null;
-let firebaseInitialized = false;
+// Глобальные переменные (var, чтобы избежать ошибок повторного объявления в web)
+var currentUser = typeof currentUser !== 'undefined' ? currentUser : null;
+var currentRole = typeof currentRole !== 'undefined' ? currentRole : null;
+var procedures = typeof procedures !== 'undefined' ? procedures : [];
+var clients = typeof clients !== 'undefined' ? clients : [];
+var currentProcedureId = typeof currentProcedureId !== 'undefined' ? currentProcedureId : null;
+var firebaseInitialized = typeof firebaseInitialized !== 'undefined' ? firebaseInitialized : false;
 
 // Элементы DOM
 const loadingScreen = document.getElementById('loadingScreen');
