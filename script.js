@@ -201,6 +201,19 @@ function setupEventListeners() {
             refreshBtn.disabled = false;
         });
     }
+
+    // Делегирование кликов по клиентам (админ)
+    const clientsListEl = document.getElementById('clientsList');
+    if (clientsListEl) {
+        clientsListEl.addEventListener('click', (event) => {
+            const item = event.target.closest('.client-item');
+            if (item && clientsListEl.contains(item)) {
+                const clientId = item.getAttribute('data-id');
+                console.log('[ADMIN] click client', clientId);
+                showClientDetails(clientId);
+            }
+        });
+    }
 }
 
 // Показать экран авторизации
@@ -679,7 +692,8 @@ async function showClientDetails(clientId) {
     
     try {
         const clientProcedures = await window.firebaseService.getUserProceduresForAdmin(clientId);
-        
+        console.log('[ADMIN] loaded procedures for', clientId, clientProcedures?.length || 0);
+
         document.getElementById('viewClientTitle').textContent = `Процедуры ${client.firstName}`;
         
         const content = document.getElementById('viewClientContent');
