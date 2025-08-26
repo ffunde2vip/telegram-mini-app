@@ -217,6 +217,25 @@ class FirebaseService {
         }
     }
 
+    // Режим реального времени для списка пользователей с процедурами (для администратора)
+    onUsersWithProceduresSnapshot(callback) {
+        if (!this.db) return () => {};
+        const usersRef = this.db.collection('users');
+        const unsubscribe = usersRef.onSnapshot(async (snapshot) => {
+            const users = [];
+            for (const doc of snapshot.docs) {
+                const userData = doc.data();
+                const proceduresSnapshot = await doc.ref.collection('procedures').get();
+                const proceduresCount = proceduresSnapshot.size;
+                if (proceduresCount > 0) {
+                    users.push({ id: doc.id, ...userData, proceduresCount });
+                }
+            }
+            callback(users);
+        });
+        return unsubscribe;
+    }
+
     // Получение процедур конкретного пользователя (для администратора)
     async getUserProceduresForAdmin(userUid) {
         try {
@@ -243,6 +262,18 @@ class FirebaseService {
             console.error('❌ Ошибка получения процедур пользователя:', error);
             return [];
         }
+    }
+
+    // Режим реального времени для процедур конкретного пользователя (для админа)
+    onUserProceduresSnapshot(userUid, callback) {
+        if (!this.db) return () => {};
+        const userRef = this.db.collection('users').doc(userUid.toString());
+        const proceduresRef = userRef.collection('procedures').orderBy('createdAt', 'desc');
+        return proceduresRef.onSnapshot((snap) => {
+            const procedures = [];
+            snap.forEach(d => procedures.push({ id: d.id, ...d.data() }));
+            callback(procedures);
+        });
     }
 
     // Проверка является ли пользователь администратором
