@@ -31,6 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+function setHidden(element, hidden) {
+    if (!element) return;
+    element.classList.toggle('hidden', !!hidden);
+}
+
 // Инициализация приложения
 async function initializeApp() {
     try {
@@ -174,18 +179,18 @@ function setupEventListeners() {
 
 // Показать экран авторизации
 function showAuthScreen() {
-    loadingScreen.style.display = 'none';
-    authScreen.style.display = 'flex';
-    userInterface.style.display = 'none';
-    adminInterface.style.display = 'none';
+    setHidden(loadingScreen, true);
+    setHidden(authScreen, false);
+    setHidden(userInterface, true);
+    setHidden(adminInterface, true);
 }
 
 // Показать интерфейс пользователя
 async function showUserInterface() {
-    loadingScreen.style.display = 'none';
-    authScreen.style.display = 'none';
-    userInterface.style.display = 'block';
-    adminInterface.style.display = 'none';
+    setHidden(loadingScreen, true);
+    setHidden(authScreen, true);
+    setHidden(userInterface, false);
+    setHidden(adminInterface, true);
     
     updateUserInfo();
     await loadProcedures();
@@ -194,10 +199,10 @@ async function showUserInterface() {
 
 // Показать интерфейс администратора
 async function showAdminInterface() {
-    loadingScreen.style.display = 'none';
-    authScreen.style.display = 'none';
-    userInterface.style.display = 'none';
-    adminInterface.style.display = 'block';
+    setHidden(loadingScreen, true);
+    setHidden(authScreen, true);
+    setHidden(userInterface, true);
+    setHidden(adminInterface, false);
     
     await loadClients();
     renderClients();
@@ -359,13 +364,13 @@ function handleSearchClients(event) {
 
 // Показать модальное окно добавления процедуры
 function showAddProcedureModal() {
-    addProcedureModal.style.display = 'flex';
+    setHidden(addProcedureModal, false);
     document.getElementById('procedureDate').value = new Date().toISOString().split('T')[0];
 }
 
 // Скрыть модальное окно добавления процедуры
 function hideAddProcedureModal() {
-    addProcedureModal.style.display = 'none';
+    setHidden(addProcedureModal, true);
     document.getElementById('addProcedureForm').reset();
 }
 
@@ -516,12 +521,12 @@ function showProcedureDetails(procedureId) {
         ` : ''}
     `;
     
-    viewProcedureModal.style.display = 'flex';
+    setHidden(viewProcedureModal, false);
 }
 
 // Скрыть модальное окно просмотра процедуры
 function hideViewProcedureModal() {
-    viewProcedureModal.style.display = 'none';
+    setHidden(viewProcedureModal, true);
     currentProcedureId = null;
 }
 
@@ -541,12 +546,12 @@ function showEditProcedureModal() {
     document.getElementById('editProcedureNotes').value = procedure.notes || '';
     
     hideViewProcedureModal();
-    editProcedureModal.style.display = 'flex';
+    setHidden(editProcedureModal, false);
 }
 
 // Скрыть модальное окно редактирования процедуры
 function hideEditProcedureModal() {
-    editProcedureModal.style.display = 'none';
+    setHidden(editProcedureModal, true);
 }
 
 // Обработка редактирования процедуры
@@ -658,7 +663,7 @@ async function showClientDetails(clientId) {
             `;
         }
         
-        viewClientModal.style.display = 'flex';
+        setHidden(viewClientModal, false);
     } catch (error) {
         console.error('Ошибка загрузки процедур клиента:', error);
         alert('Ошибка загрузки процедур клиента');
@@ -667,7 +672,7 @@ async function showClientDetails(clientId) {
 
 // Скрыть модальное окно просмотра клиента
 function hideViewClientModal() {
-    viewClientModal.style.display = 'none';
+    setHidden(viewClientModal, true);
 }
 
 // Выход из системы
