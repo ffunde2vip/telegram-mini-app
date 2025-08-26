@@ -246,7 +246,15 @@ class FirebaseService {
             }
             const userRef = this.db.collection('users').doc(userUid.toString());
             const proceduresRef = userRef.collection('procedures');
-            const snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
+            // createdAt хранится как Date при сохранении через серверное время
+            // Если где-то попали строки, просто читаем без orderBy
+            let snapshot;
+            try {
+                snapshot = await proceduresRef.orderBy('createdAt', 'desc').get();
+            } catch (e) {
+                console.warn('⚠️ orderBy(createdAt) не сработал, читаю без сортировки');
+                snapshot = await proceduresRef.get();
+            }
             
             const procedures = [];
             snapshot.forEach(doc => {
