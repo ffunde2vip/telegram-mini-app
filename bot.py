@@ -156,13 +156,14 @@ if __name__ == "__main__":
     print("📱 URL мини-приложения: https://ffunde2vip.github.io/telegram-mini-app/")
     
     try:
-        # Сначала сбрасываем webhook
-        bot.delete_webhook()
-        print("✅ Webhook сброшен")
+        # Сначала сбрасываем webhook и удаляем висящие обновления,
+        # чтобы другой getUpdates не держал соединение
+        bot.delete_webhook(drop_pending_updates=True)
+        print("✅ Webhook сброшен (drop_pending_updates=True)")
         
-        # Запускаем polling
+        # Запускаем infinity_polling с пропуском возможных старых апдейтов
         print("🔄 Запуск polling...")
-        bot.polling(none_stop=True, timeout=60)
+        bot.infinity_polling(timeout=60, long_polling_timeout=60, skip_pending=True)
     except Exception as e:
         print(f"❌ Ошибка: {e}")
         print("💡 Попробуйте:")
