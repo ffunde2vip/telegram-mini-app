@@ -687,7 +687,11 @@ async function handleDeleteProcedure() {
 
 // Показать детали клиента
 async function showClientDetails(clientId) {
-    const client = clients.find(c => c.id === clientId);
+    let client = clients.find(c => c.id === clientId);
+    if (!client) {
+        // Подстрахуемся: загрузим профиль из БД
+        client = await window.firebaseService.getUserById(clientId);
+    }
     if (!client) return;
     
     try {
