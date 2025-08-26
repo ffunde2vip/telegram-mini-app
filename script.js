@@ -82,9 +82,14 @@ async function initializeApp() {
             
             // Создаем или получаем пользователя в Firebase
             await window.firebaseService.createOrGetUser(currentUser.id, currentUser);
+
+            // Читаем профиль, чтобы получить актуальный флаг isAdmin из базы
+            const profile = await window.firebaseService.getUserById(currentUser.id);
+            window._currentTelegramId = currentUser.id;
+            window._userIsAdminFlag = profile?.isAdmin === true;
             
             // Определяем роль пользователя
-            if (window.firebaseService.isAdmin(currentUser.id)) {
+            if (window._userIsAdminFlag || window.firebaseService.isAdmin(currentUser.id)) {
                 currentRole = 'admin';
                 await showAdminInterface();
             } else {
