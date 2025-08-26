@@ -31,7 +31,7 @@ class FirebaseService {
             // Документ пользователя — по Telegram ID, чтобы идентификатор не менялся между анонимными сессиями
             const userRef = this.db.collection('users').doc(telegramId.toString());
             const userDoc = await userRef.get();
-            const isAdminDefault = this.isAdmin(telegramId);
+            // Не назначаем админа по умолчанию — статус админа управляется командами /admin и /unadmin в боте
             
             if (!userDoc.exists) {
                 // Создаем нового пользователя
@@ -39,8 +39,7 @@ class FirebaseService {
                 await userRef.set({
                     telegramId: telegramId,
                     ...userInfo,
-                    // Инициализируем isAdmin только при создании (дальше может быть изменен ботом/веб‑приложением)
-                    isAdmin: isAdminDefault,
+                    isAdmin: false,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
