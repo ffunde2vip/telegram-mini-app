@@ -380,6 +380,15 @@ body {
     padding: 20px;
 }
 
+/* Гарантируем порядок модалок: детали процедуры выше списка клиента */
+#viewClientModal {
+    z-index: 9999;
+}
+
+#viewProcedureModal {
+    z-index: 10000;
+}
+
 .modal-content {
     background: var(--tg-theme-bg-color, #ffffff);
     border-radius: 16px;
