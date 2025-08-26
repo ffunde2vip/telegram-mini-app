@@ -14,17 +14,17 @@ var clients = typeof clients !== 'undefined' ? clients : [];
 var currentProcedureId = typeof currentProcedureId !== 'undefined' ? currentProcedureId : null;
 var firebaseInitialized = typeof firebaseInitialized !== 'undefined' ? firebaseInitialized : false;
 
-// Элементы DOM
-const loadingScreen = document.getElementById('loadingScreen');
-const authScreen = document.getElementById('authScreen');
-const userInterface = document.getElementById('userInterface');
-const adminInterface = document.getElementById('adminInterface');
+// Элементы DOM (var, чтобы избежать ошибки повторного объявления при дублях загрузки)
+var loadingScreen = document.getElementById('loadingScreen');
+var authScreen = document.getElementById('authScreen');
+var userInterface = document.getElementById('userInterface');
+var adminInterface = document.getElementById('adminInterface');
 
 // Модальные окна
-const addProcedureModal = document.getElementById('addProcedureModal');
-const viewProcedureModal = document.getElementById('viewProcedureModal');
-const editProcedureModal = document.getElementById('editProcedureModal');
-const viewClientModal = document.getElementById('viewClientModal');
+var addProcedureModal = document.getElementById('addProcedureModal');
+var viewProcedureModal = document.getElementById('viewProcedureModal');
+var editProcedureModal = document.getElementById('editProcedureModal');
+var viewClientModal = document.getElementById('viewClientModal');
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
